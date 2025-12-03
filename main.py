@@ -1,8 +1,6 @@
-import openai
+from boltiotai import openai
 import os
 import sys
-
-question =input("what is your question?")
 
 try:
     openai.api_key = os.environ['OPENAI_API_KEY']
@@ -22,19 +20,23 @@ except KeyError:
   """)
     exit(1)
 
-response = openai.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=[
-        {        "role": "system",
-        "content": "You are a helpful assistant."
-    },
-              
-    #{"role": "user", "content": "Who won the world series in 2020?" }, 
-             # { "role":"assistant", "content": "The Los Angeles Dodgers won the World Series2020."}, 
-              {
-        "role": "user",
-        "content": question
-    }])
-
-output = response.choices[0].message.content
-print(output)
+while True:
+    question = input("what is your question? please ask me: ")
+    
+    response = openai.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a helpful assistant."
+            },
+            {
+                "role": "user",
+                "content": question
+            }
+        ]
+    )
+    
+    output = response.choices[0].message.content
+    
+    print(output)
