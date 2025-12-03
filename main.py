@@ -1,44 +1,19 @@
 from boltiotai import openai
 import os
-import sys
 
-try:
-    openai.api_key = os.environ['OPENAI_API_KEY']
-except KeyError:
-    sys.stderr.write("""
-  You haven't set up your API key yet.
-  
-  If you don't have an API key yet, visit:
-  
-  https://platform.openai.com/signup
+from flask import Flask, render_template_string, request
 
-  1. Make an account or sign in
-  2. Click "View API Keys" from the top right menu.
-  3. Click "Create new secret key"
+openai.api_key = os.environ['OPENAI_API_KEY']
 
-  Then, open the Secrets Tool and add OPENAI_API_KEY as a secret.
-  """)
-    exit(1)
-
-while True:
-    question = input("what is your question? please ask me: ")
-    
+def generate_tutorial(components):
     response = openai.chat.completions.create(
         model="gpt-3.5-turbo",
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a helpful assistant."
-            },
-            {
-                "role": "user",
-                "content": question
-            }
-        ]
+        messages=[{
+            "role": "system",
+            "content": "You are a helpful assistant"
+        }, {
+            "role": "user",
+            "content": f"Suggest a recipe using the items listed as available. Make sure you have a nice name for this recipe listed at the start. Also, include a funny version of the name of the recipe on the following line. Then share the recipe in a step-by-step manner. In the end, write a fun fact about the recipe or any of the items used in the recipe. Here are the items available: {components}, Haldi, Chilly Powder, Tomato Ketchup, Water, Garam Masala, Oil"
+        }]
     )
-    
-    output = response['choices'][0]['message']['content']
-    
-    print(output)
-
-
+    return response['choices'][0]['message']['content']
