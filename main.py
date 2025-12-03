@@ -37,6 +37,8 @@ while True:
         ]
     )
     
-    output = response.choices[0].message.content
+    output = response['choices'][0]['message']['content']
     
     print(output)
+
+
