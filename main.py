@@ -17,48 +17,79 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def hello():
-    image_url = ""
-    if request.method == 'POST':
-        prompt = request.form['components']
-        image_url = generate_tutorial(prompt)
+    output = ""
     
-    html = """
+    if request.method == 'POST':
+        components = request.form['components']
+        output = generate_tutorial(components)
+    
+    return render_template_string('''
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Image Generator</title>
-        <style>
-            body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-            h1 { color: #333; }
-            textarea { width: 100%; padding: 10px; margin: 10px 0; }
-            button { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; }
-            button:hover { background-color: #45a049; }
-            .output { background-color: #f4f4f4; padding: 20px; margin-top: 20px; text-align: center; }
-            .output img { max-width: 100%; border-radius: 8px; }
-        </style>
+        <title>Infinite Image Generator</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     </head>
     <body>
-        <h1>AI Image Generator</h1>
-        <form method="POST">
-            <label>Enter your image prompt:</label>
-            <textarea name="components" rows="4" placeholder="e.g., a beautiful sunset over mountains"></textarea>
-            <button type="submit">Generate Image</button>
-        </form>
-        {% if image_url %}
-        <div class="output">
-            <h2>Your Generated Image:</h2>
-            <img src="{{ image_url }}" alt="Generated image">
+        <div class="container">
+            <h1 class="my-4">Custom Image Generator</h1>
+            <form id="tutorial-form" onsubmit="event.preventDefault(); generateTutorial();" class="mb-3">
+                <div class="mb-3">
+                    <label for="components" class="form-label">Textual Description of the Image:</label>
+                    <input type="text" class="form-control" id="components" name="components" placeholder="Enter the Description (Ex: A Lion in a Cage)" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Generate Image</button>
+            </form>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    Output:
+                    <button class="btn btn-secondary btn-sm" onclick="copyToClipboard()">Copy URL</button>
+                </div>
+                <div class="card-body">
+                    <p id="output" style="white-space: pre-wrap;"></p>
+                    <img id="myImage" src="" style="width: auto; height: 300px;">
+                </div>
+            </div>
         </div>
-        {% endif %}
+
+        <script>
+        async function generateTutorial() {
+            const components = document.querySelector('#components').value;
+            const output = document.querySelector('#output');
+            const imgElement = document.getElementById('myImage');
+            output.textContent = 'Generating an image for you...';
+            
+            const response = await fetch('/generate', {
+                method: 'POST',
+                body: new FormData(document.querySelector('#tutorial-form'))
+            });
+            const imageUrl = await response.text();
+            imgElement.src = imageUrl;
+            output.textContent = 'Image generated!';
+        }
+        
+        function copyToClipboard() {
+            const imgElement = document.getElementById('myImage');
+            const imageUrl = imgElement.src;
+            const textarea = document.createElement('textarea');
+            textarea.value = imageUrl;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('Image URL copied to clipboard!');
+        }
+        </script>
     </body>
     </html>
-    """
-    return render_template_string(html, image_url=image_url)
+    ''', output=output)
 
 @app.route('/generate', methods=['POST'])
 def generate():
-    prompt = request.form['components']
-    return generate_tutorial(prompt)
+    components = request.form['components']
+    return generate_tutorial(components)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
+
